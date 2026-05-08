@@ -36,11 +36,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(next);
   };
 
-  return (
-    <ThemeCtx.Provider value={{ theme, toggle }}>
-      {children}
-    </ThemeCtx.Provider>
-  );
+  return <ThemeCtx.Provider value={{ theme, toggle }}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme() {

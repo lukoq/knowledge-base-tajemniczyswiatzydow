@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Play, Clock, Sun, Moon } from "lucide-react";
-import { questions, groupByVideo } from "@/data/questions";
+import { useQuery } from "@tanstack/react-query";
+import { Search, Play, Clock, Sun, Moon, Loader2 } from "lucide-react";
+import { fetchQuestions, groupByVideo } from "@/data/questions";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 
@@ -10,7 +11,11 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Zapytaj Żyda — Q&A Knowledge Base" },
-      { name: "description", content: "Searchable knowledge base of Q&A from YouTube live sessions. Click any question to jump to its exact moment." },
+      {
+        name: "description",
+        content:
+          "Searchable knowledge base of Q&A from YouTube live sessions. Click any question to jump to its exact moment.",
+      },
     ],
   }),
 });
@@ -19,35 +24,41 @@ function Index() {
   const { theme, toggle } = useTheme();
   const [query, setQuery] = useState("");
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return questions;
-    return questions.filter(item =>
-      item.question.toLowerCase().includes(q) ||
-      item.video_title.toLowerCase().includes(q),
-    );
-  }, [query]);
+  const { data: questions, isLoading } = useQuery({
+    queryKey: ["questions", query],
+    queryFn: () => fetchQuestions(query || undefined),
+  });
 
-  const groups = useMemo(() => groupByVideo(filtered), [filtered]);
-  const totalMatches = filtered.length;
+  const groups = useMemo(() => {
+    if (!questions) return [];
+    return groupByVideo(questions);
+  }, [questions]);
+
+  const totalMatches = questions?.length ?? 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto max-w-5xl px-4 py-4">
-            <div className="flex items-center justify-between gap-3 mb-3">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
               <div className="grid place-items-center w-9 h-9 rounded-lg bg-primary/15 text-primary">
                 <Play className="w-4 h-4 fill-current" />
               </div>
               <div>
                 <h1 className="text-base font-semibold leading-tight">Q&A Knowledge Base</h1>
-                <p className="text-xs text-muted-foreground">{questions.length} questions · {groupByVideo(questions).length} videos</p>
+                <p className="text-xs text-muted-foreground">
+                  {questions?.length ?? 0} questions · {groups.length} videos
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground tabular-nums hidden sm:block">
-                {query ? `${totalMatches} match${totalMatches === 1 ? "" : "es"}` : ""}
+                {isLoading
+                  ? "Loading…"
+                  : query
+                    ? `${totalMatches} match${totalMatches === 1 ? "" : "es"}`
+                    : ""}
               </span>
               <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -75,13 +86,20 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8 space-y-10">
-        {groups.length === 0 && (
+        {isLoading && (
+          <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Loading questions…</span>
+          </div>
+        )}
+
+        {!isLoading && groups.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
             No questions match "<span className="text-foreground">{query}</span>"
           </div>
         )}
 
-        {groups.map(group => (
+        {groups.map((group) => (
           <section key={group.video_id} className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 sm:items-end">
               <a
@@ -105,8 +123,12 @@ function Index() {
                 </div>
               </a>
               <div className="flex-1 min-w-0">
-                <h2 className="text-xl sm:text-2xl font-semibold leading-tight">{group.video_title}</h2>
-                <p className="mt-1 text-sm text-muted-foreground">{group.questions.length} question{group.questions.length === 1 ? "" : "s"}</p>
+                <h2 className="text-xl sm:text-2xl font-semibold leading-tight">
+                  {group.video_title}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {group.questions.length} question{group.questions.length === 1 ? "" : "s"}
+                </p>
               </div>
             </div>
 
