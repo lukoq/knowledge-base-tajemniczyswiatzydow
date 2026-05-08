@@ -90,8 +90,11 @@
     font-feature-settings: "ss01", "cv11";
   }
 
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     border-color: var(--border);
     transition: none !important;
-    animation: none !important;  }
+    animation: none !important;
+  }
 }
