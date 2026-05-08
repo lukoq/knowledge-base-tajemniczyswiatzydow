@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Play, Clock } from "lucide-react";
+import { Search, Play, Clock, Sun, Moon } from "lucide-react";
 import { questions, groupByVideo } from "@/data/questions";
+import { useTheme } from "@/hooks/use-theme";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -14,6 +16,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { theme, toggle } = useTheme();
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
@@ -29,10 +32,10 @@ function Index() {
   const totalMatches = filtered.length;
 
   return (
-    <div className="min-h-screen dark bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto max-w-5xl px-4 py-4">
-          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
               <div className="grid place-items-center w-9 h-9 rounded-lg bg-primary/15 text-primary">
                 <Play className="w-4 h-4 fill-current" />
@@ -42,9 +45,14 @@ function Index() {
                 <p className="text-xs text-muted-foreground">{questions.length} questions · {groupByVideo(questions).length} videos</p>
               </div>
             </div>
-            <span className="text-xs text-muted-foreground tabular-nums hidden sm:block">
-              {query ? `${totalMatches} match${totalMatches === 1 ? "" : "es"}` : ""}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground tabular-nums hidden sm:block">
+                {query ? `${totalMatches} match${totalMatches === 1 ? "" : "es"}` : ""}
+              </span>
+              <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
+                {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />

@@ -9,6 +9,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -30,9 +31,34 @@
   --color-ring: var(--ring);
 }
 
+/* 1. DOMYŚLNY TRYB (JASNY) */
 :root {
   --radius: 0.75rem;
-  /* Dark by default */
+  --background: oklch(0.98 0.005 260);
+  --foreground: oklch(0.16 0.01 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.01 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.01 260);
+  --primary: oklch(0.65 0.2 25);
+  --primary-foreground: oklch(0.98 0.005 250);
+  --secondary: oklch(0.92 0.01 260);
+  --secondary-foreground: oklch(0.27 0.02 260);
+  --muted: oklch(0.95 0.005 260);
+  --muted-foreground: oklch(0.6 0.02 260);
+  --accent: oklch(0.9 0.015 260);
+  --accent-foreground: oklch(0.2 0.02 260);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.98 0.005 250);
+  --border: oklch(0 0 0 / 10%);
+  --input: oklch(0 0 0 / 8%);
+  --ring: oklch(0.65 0.2 25);
+  --gradient-hero: linear-gradient(135deg, oklch(0.9 0.04 280), oklch(0.95 0.02 260));
+  --shadow-card: 0 8px 30px -8px oklch(0 0 0 / 0.15);
+}
+
+/* 2. TRYB CIEMNY */
+.dark {
   --background: oklch(0.16 0.01 260);
   --foreground: oklch(0.97 0.005 250);
   --card: oklch(0.21 0.015 260);
@@ -52,16 +78,20 @@
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.72 0.18 25);
-
   --gradient-hero: linear-gradient(135deg, oklch(0.22 0.04 280), oklch(0.18 0.02 260));
   --shadow-card: 0 8px 30px -8px oklch(0 0 0 / 0.5);
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
   body {
-    background: var(--color-background);
-    color: var(--color-foreground);
+    /* USUNIĘTO TRANSITION - koniec lagów */
+    background-color: var(--background);
+    color: var(--foreground);
     font-feature-settings: "ss01", "cv11";
   }
+
+  *, *::before, *::after {
+    border-color: var(--border);
+    transition: none !important;
+    animation: none !important;  }
 }
