@@ -26,12 +26,19 @@ export function groupByVideo(items: QA[]): VideoGroup[] {
   return [...map.values()];
 }
 
-export async function fetchQuestions(query?: string): Promise<QA[]> {
+export async function fetchQuestions(
+  query?: string,
+  range?: { from: number; to: number }
+): Promise<QA[]> {
   let builder = supabase.from("questions").select("*");
 
   if (query) {
     const term = `%${query}%`;
-    builder = builder.or(`question.ilike.${term},video_title.ilike.${term}`);
+    builder = builder.ilike("question", term);
+  }
+
+  if (range) {
+    builder = builder.range(range.from, range.to);
   }
 
   const { data, error } = await builder
@@ -45,4 +52,26 @@ export async function fetchQuestions(query?: string): Promise<QA[]> {
 
   if (error) throw error;
   return data ?? [];
+}
+
+export async function fetchMatchingCounts(
+  query?: string
+): Promise<{ questionCount: number; videoCount: number }> {
+  let countBuilder = supabase.from("questions").select("*", { count: "exact", head: true });
+
+  if (query) {
+    const term = `%${query}%`;
+    countBuilder = countBuilder.ilike("question", term);
+  }
+
+  const { count: questionCount, error: countError } = await countBuilder;
+  if (countError) throw countError;
+
+  const { data: videoCount, error: videoError } = await supabase.rpc("count_unique_videos", {
+    search_term: query || null,
+  });
+
+  if (videoError) throw videoError;
+
+  return { questionCount: questionCount ?? 0, videoCount: videoCount ?? 0 };
 }

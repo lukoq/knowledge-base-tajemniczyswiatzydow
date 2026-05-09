@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Search, Play, Clock, Sun, Moon, Loader2 } from "lucide-react";
-import { fetchQuestions, groupByVideo } from "@/data/questions";
+import { fetchMatchingCounts, fetchQuestions, groupByVideo } from "@/data/questions";
 import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 
@@ -20,21 +20,65 @@ export const Route = createFileRoute("/")({
   }),
 });
 
+const PAGE_SIZE = 100;
+
 function Index() {
   const { theme, toggle } = useTheme();
   const [query, setQuery] = useState("");
 
-  const { data: questions, isLoading } = useQuery({
-    queryKey: ["questions", query],
-    queryFn: () => fetchQuestions(query || undefined),
+  const { data: counts } = useQuery({
+    queryKey: ["questions-count", query],
+    queryFn: () => fetchMatchingCounts(query || undefined),
   });
+
+  const {
+    data,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["questions", query],
+    queryFn: ({ pageParam }) =>
+      fetchQuestions(query || undefined, {
+        from: pageParam * PAGE_SIZE,
+        to: (pageParam + 1) * PAGE_SIZE - 1,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) => {
+      if (lastPage.length < PAGE_SIZE) return undefined;
+      return lastPageParam + 1;
+    },
+  });
+
+  const questions = useMemo(() => {
+    if (!data) return undefined;
+    return data.pages.flat();
+  }, [data]);
 
   const groups = useMemo(() => {
     if (!questions) return [];
     return groupByVideo(questions);
   }, [questions]);
 
-  const totalMatches = questions?.length ?? 0;
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -48,7 +92,7 @@ function Index() {
               <div>
                 <h1 className="text-base font-semibold leading-tight">Q&A Knowledge Base</h1>
                 <p className="text-xs text-muted-foreground">
-                  {questions?.length ?? 0} questions · {groups.length} videos
+                  {counts?.questionCount ?? 0} questions · {counts?.videoCount ?? 0} videos
                 </p>
               </div>
             </div>
@@ -57,7 +101,7 @@ function Index() {
                 {isLoading
                   ? "Loading…"
                   : query
-                    ? `${totalMatches} match${totalMatches === 1 ? "" : "es"}`
+                    ? `${counts?.questionCount ?? 0} match${counts?.questionCount === 1 ? "" : "es"}`
                     : ""}
               </span>
               <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
@@ -152,6 +196,15 @@ function Index() {
             </ul>
           </section>
         ))}
+
+        {isFetchingNextPage && (
+          <div className="flex items-center justify-center gap-2 py-10 text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>Loading more questions…</span>
+          </div>
+        )}
+
+        <div ref={sentinelRef} className="h-1" />
 
         <footer className="pt-8 pb-4 text-center text-xs text-muted-foreground">
           Click any question to open the video at the exact moment.
