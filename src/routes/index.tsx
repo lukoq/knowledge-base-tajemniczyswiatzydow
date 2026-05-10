@@ -31,13 +31,7 @@ function Index() {
     queryFn: () => fetchMatchingCounts(query || undefined),
   });
 
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ["questions", query],
     queryFn: ({ pageParam }) =>
       fetchQuestions(query || undefined, {
@@ -73,7 +67,7 @@ function Index() {
           fetchNextPage();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     observer.observe(el);
@@ -171,7 +165,8 @@ function Index() {
                   {group.video_title}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {group.questions.length} question{group.questions.length === 1 ? "" : "s"}
+                  {group.video_date} · {group.questions.length} question
+                  {group.questions.length === 1 ? "" : "s"}
                 </p>
               </div>
             </div>
