@@ -40,20 +40,25 @@ export async function fetchQuestions(
   query?: string,
   range?: { from: number; to: number },
 ): Promise<QA[]> {
-  let builder = supabase.from("questions_with_videos").select("*");
+  let builder;
 
   if (query) {
-    const term = `%${query}%`;
-    builder = builder.ilike("question", term);
+    builder = supabase.rpc("search_questions_fuzzy", { query_text: query });
+  } else {
+    builder = supabase.from("questions_with_videos").select("*");
   }
 
   if (range) {
     builder = builder.range(range.from, range.to);
   }
 
-  const { data, error } = await builder
-    .order("video_date", { ascending: false })
-    .order("seconds", { ascending: true });
+  if (!query) {
+    builder = builder
+      .order("video_date", { ascending: false })
+      .order("seconds", { ascending: true });
+  }
+
+  const { data, error } = await builder;
 
   if (error) {
     console.error("Błąd Supabase:", error.message);
