@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Search, Play, Clock, Sun, Moon, Loader2 } from "lucide-react";
 import { fetchMatchingCounts, fetchQuestions, groupByVideo } from "@/data/questions";
 import { useTheme } from "@/hooks/use-theme";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -81,12 +82,12 @@ function Index() {
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
               <div className="grid place-items-center w-9 h-9 rounded-lg bg-primary/15 text-primary">
-                <Play className="w-4 h-4 fill-current" />
+                <Play className="w-6 h-6 fill-current" />
               </div>
               <div>
-                <h1 className="text-base font-semibold leading-tight">Q&A Knowledge Base</h1>
+                <h1 className="text-base font-semibold leading-tight">Tajemniczy Świat Żydów - Zbiór pytań z Q&A</h1>
                 <p className="text-xs text-muted-foreground">
-                  {counts?.questionCount ?? 0} questions · {counts?.videoCount ?? 0} videos
+                  {counts?.questionCount ?? 0} pytań · {counts?.videoCount ?? 0} filmy
                 </p>
               </div>
             </div>
@@ -95,7 +96,7 @@ function Index() {
                 {isLoading
                   ? "Loading…"
                   : query
-                    ? `${counts?.questionCount ?? 0} match${counts?.questionCount === 1 ? "" : "es"}`
+                    ? `${counts?.questionCount ?? 0} wynik${counts?.questionCount === 1 ? "" : "ów"}`
                     : ""}
               </span>
               <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
@@ -108,7 +109,7 @@ function Index() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search questions across all videos…"
+              placeholder="Przeszukaj baze pytań..."
               className="w-full h-11 pl-10 pr-10 rounded-xl bg-card border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition"
             />
             {query && (
@@ -120,6 +121,29 @@ function Index() {
               </button>
             )}
           </div>
+          <div className="flex gap-2 overflow-x-auto mt-3 py-2">
+            {["Szabas", "Tojra", "Pesach", "Mykwa", "Talmud", "Chanuka", "Koszerność", "Aszkenazi"].map((term) => (
+              <Badge
+                key={term}
+                className={`cursor-pointer whitespace-nowrap shrink-0 px-4 py-2 text-sm border-0 focus:ring-0 focus:ring-offset-0 outline-none focus:outline-none ${
+                  query === term
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                }`}
+                onClick={() => setQuery(query === term ? "" : term)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setQuery(query === term ? "" : term);
+                  }
+                }}
+              >
+                {term}
+              </Badge>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -127,7 +151,7 @@ function Index() {
         {isLoading && (
           <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Loading questions…</span>
+            <span>Ładowanie...</span>
           </div>
         )}
 
