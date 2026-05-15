@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { Search, Play, Clock, Sun, Moon, Loader2 } from "lucide-react";
+import { Search, Play, Clock, Sun, Moon, Loader2, ChevronDown } from "lucide-react";
 import { fetchMatchingCounts, fetchQuestions, groupByVideo } from "@/data/questions";
 import { useTheme } from "@/hooks/use-theme";
 import { Badge } from "@/components/ui/badge";
@@ -23,22 +23,33 @@ export const Route = createFileRoute("/")({
 
 const PAGE_SIZE = 100;
 
+const yearOptions = [
+  { value: "all", label: "All years" },
+  { value: "2026", label: "2026" },
+  { value: "2025", label: "2025" },
+  { value: "2024", label: "2024" },
+  { value: "2023", label: "2023" },
+  { value: "2022", label: "2022" },
+];
+
 function Index() {
   const { theme, toggle } = useTheme();
   const [query, setQuery] = useState("");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [isOpen, setIsOpen] = useState(false);
 
   const { data: counts } = useQuery({
-    queryKey: ["questions-count", query],
-    queryFn: () => fetchMatchingCounts(query || undefined),
+    queryKey: ["questions-count", query, selectedYear],
+    queryFn: () => fetchMatchingCounts(query || undefined, selectedYear !== "all" ? selectedYear : undefined),
   });
 
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: ["questions", query],
+    queryKey: ["questions", query, selectedYear],
     queryFn: ({ pageParam }) =>
       fetchQuestions(query || undefined, {
         from: pageParam * PAGE_SIZE,
         to: (pageParam + 1) * PAGE_SIZE - 1,
-      }),
+      }, selectedYear !== "all" ? selectedYear : undefined),
     initialPageParam: 0,
     getNextPageParam: (lastPage, _allPages, lastPageParam) => {
       if (lastPage.length < PAGE_SIZE) return undefined;
@@ -75,6 +86,18 @@ function Index() {
     return () => observer.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
@@ -108,13 +131,13 @@ function Index() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setSelectedYear("all"); }}
               placeholder="Przeszukaj baze pytań..."
               className="w-full h-11 pl-10 pr-10 rounded-xl bg-card border border-border text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition"
             />
             {query && (
               <button
-                onClick={() => setQuery("")}
+                onClick={() => { setQuery(""); setSelectedYear("all"); }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-accent"
               >
                 Clear
@@ -122,7 +145,7 @@ function Index() {
             )}
           </div>
           <div className="flex gap-2 overflow-x-auto mt-3 py-2">
-            {["Szabas", "Tojra", "Pesach", "Mykwa", "Talmud", "Chanuka", "Koszerność", "Aszkenazi"].map((term) => (
+            {["Szabes", "Torah", "Pesach", "Mykwa", "Talmud", "Chanuka", "Koszerność", "Aszkenazi"].map((term) => (
               <Badge
                 key={term}
                 className={`cursor-pointer whitespace-nowrap shrink-0 px-4 py-2 text-sm border-0 focus:ring-0 focus:ring-offset-0 outline-none focus:outline-none ${
@@ -130,13 +153,15 @@ function Index() {
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
                     : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                 }`}
-                onClick={() => setQuery(query === term ? "" : term)}
+                onClick={() => { const next = query === term ? "" : term; setQuery(next); setSelectedYear("all"); }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    setQuery(query === term ? "" : term);
+                    const next = query === term ? "" : term;
+                    setQuery(next);
+                    setSelectedYear("all");
                   }
                 }}
               >
@@ -148,6 +173,42 @@ function Index() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-8 space-y-10">
+        <div className="flex justify-end w-full">
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex items-center gap-2 bg-background border border-border text-foreground text-sm rounded-lg pl-4 pr-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary transition-colors hover:bg-accent/50 shadow-sm"
+            >
+              <span>{selectedYear === "all" ? "All years" : selectedYear}</span>
+              <ChevronDown
+                className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {isOpen && (
+              <ul className="absolute z-10 mt-1 w-full bg-background rounded-md shadow-lg border border-border overflow-hidden">
+                {yearOptions.map((option) => (
+                  <li
+                    key={option.value}
+                    onClick={() => {
+                      setSelectedYear(option.value);
+                      setQuery("");
+                      setIsOpen(false);
+                    }}
+                    className={`px-4 py-2 text-sm cursor-pointer transition-colors ${
+                      selectedYear === option.value
+                        ? "bg-accent text-accent-foreground"
+                        : "text-foreground hover:bg-accent/50"
+                    }`}
+                  >
+                    {option.label}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
         {isLoading && (
           <div className="flex items-center justify-center gap-2 py-20 text-muted-foreground">
             <Loader2 className="w-4 h-4 animate-spin" />

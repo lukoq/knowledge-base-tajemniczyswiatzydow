@@ -39,10 +39,16 @@ export function groupByVideo(items: QA[]): VideoGroup[] {
 export async function fetchQuestions(
   query?: string,
   range?: { from: number; to: number },
+  year?: string 
 ): Promise<QA[]> {
+  
   if (!query) {
     let builder = supabase.from("questions_with_videos").select("*");
     
+    if (year && year !== "all") {
+      builder = builder.like("video_date", `${year}%`);
+    }
+
     if (range) {
       builder = builder.range(range.from, range.to);
     }
@@ -52,24 +58,14 @@ export async function fetchQuestions(
       .order("seconds", { ascending: true });
       
     const { data, error } = await builder;
-    if (error) {
-      console.error("Błąd pobierania bazy:", error.message);
-      throw error;
-    }
+    if (error) throw error;
     return (data as QA[]) ?? [];
   }
-  
+
   const { data: rpcData, error: rpcError } = await supabase.rpc("search_questions_final", { query_text: query });
   
-  if (rpcError) {
-    console.error("Błąd inteligentnego wyszukiwania RPC:", rpcError);
-    return [];
-  }
+  if (rpcError || !rpcData || rpcData.length === 0) return [];
 
-  if (!rpcData || rpcData.length === 0) {
-    console.log("Brak pasujących pytań.");
-    return [];
-  }
   const questionTexts = rpcData.map(q => q.question);
 
   const { data: fullData, error: fullError } = await supabase
@@ -77,14 +73,7 @@ export async function fetchQuestions(
     .select("*")
     .in("question", questionTexts);
 
-  if (fullError) {
-    console.error("Błąd pobierania widoku z filmami:", fullError);
-    return [];
-  }
-
-  if (!fullData || fullData.length === 0) {
-    return [];
-  }
+  if (fullError || !fullData || fullData.length === 0) return [];
 
   const sortedData = fullData.sort((a, b) => {
     const indexA = questionTexts.indexOf(a.question);
@@ -101,23 +90,27 @@ export async function fetchQuestions(
 
 export async function fetchMatchingCounts(
   query?: string,
+  year?: string 
 ): Promise<{ questionCount: number; videoCount: number }> {
-  let questionCount: number;
+  let questionCount = 0;
 
   if (query) {
     const { data, error } = await supabase.rpc("search_questions_final", { query_text: query });
     if (error) throw error;
     questionCount = data?.length ?? 0;
   } else {
-    const { count, error } = await supabase
-      .from("questions")
-      .select("*", { count: "exact", head: true });
+    let builder = supabase.from("questions_with_videos").select("*", { count: "exact", head: true });
+    if (year && year !== "all") {
+      builder = builder.like("video_date", `${year}%`);
+    }
+    const { count, error } = await builder;
     if (error) throw error;
     questionCount = count ?? 0;
   }
 
   const { data: videoCount, error: videoError } = await supabase.rpc("count_unique_videos", {
     search_term: query || null,
+    p_year: (year && year !== "all" && !query) ? year : null
   });
 
   if (videoError) throw videoError;
