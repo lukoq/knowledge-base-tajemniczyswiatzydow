@@ -42,50 +42,35 @@ export async function fetchQuestions(
   year?: string 
 ): Promise<QA[]> {
   
+  let builder;
+
   if (!query) {
-    let builder = supabase.from("questions_with_videos").select("*");
+    builder = supabase.from("questions_with_videos").select("*");
     
     if (year && year !== "all") {
       builder = builder.like("video_date", `${year}%`);
     }
 
-    if (range) {
-      builder = builder.range(range.from, range.to);
-    }
-    
     builder = builder
       .order("video_date", { ascending: false })
       .order("seconds", { ascending: true });
       
-    const { data, error } = await builder;
-    if (error) throw error;
-    return (data as QA[]) ?? [];
+  } else {
+    builder = supabase.rpc("search_questions_full", { query_text: query });
   }
-
-  const { data: rpcData, error: rpcError } = await supabase.rpc("search_questions_final", { query_text: query });
-  
-  if (rpcError || !rpcData || rpcData.length === 0) return [];
-
-  const questionTexts = rpcData.map(q => q.question);
-
-  const { data: fullData, error: fullError } = await supabase
-    .from("questions_with_videos")
-    .select("*")
-    .in("question", questionTexts);
-
-  if (fullError || !fullData || fullData.length === 0) return [];
-
-  const sortedData = fullData.sort((a, b) => {
-    const indexA = questionTexts.indexOf(a.question);
-    const indexB = questionTexts.indexOf(b.question);
-    return indexA - indexB;
-  });
 
   if (range) {
-    return (sortedData.slice(range.from, range.to + 1) as QA[]);
+    builder = builder.range(range.from, range.to);
   }
 
-  return sortedData as QA[];
+  const { data, error } = await builder;
+
+  if (error) {
+    console.error("Błąd pobierania pytań:", error.message);
+    return [];
+  }
+
+  return (data as QA[]) ?? [];
 }
 
 export async function fetchMatchingCounts(
