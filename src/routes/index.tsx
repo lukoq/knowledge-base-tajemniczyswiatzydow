@@ -24,7 +24,7 @@ export const Route = createFileRoute("/")({
 const PAGE_SIZE = 100;
 
 const yearOptions = [
-  { value: "all", label: "All years" },
+  { value: "all", label: "Cały okres" },
   { value: "2026", label: "2026" },
   { value: "2025", label: "2025" },
   { value: "2024", label: "2024" },
@@ -88,6 +88,32 @@ function Index() {
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  function formatQuestionsCount(count: number): string {
+    if (count === 1) return "1 pytanie";
+    
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+
+    if (lastDigit >= 2 && lastDigit <= 4 && !(lastTwoDigits >= 12 && lastTwoDigits <= 14)) {
+      return `${count} pytania`;
+    }
+    
+    return `${count} pytań`;
+  }
+  function formatResultsCount(count: number): string {
+    if (count === 0) return "0 wyników";
+    if (count === 1) return "1 wynik";
+    
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+
+    if (lastDigit >= 2 && lastDigit <= 4 && !(lastTwoDigits >= 12 && lastTwoDigits <= 14)) {
+      return `${count} wyniki`;
+    }
+    
+    return `${count} wyników`;
+  }
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -119,7 +145,7 @@ function Index() {
                 {isLoading
                   ? "Loading…"
                   : query
-                    ? `${counts?.questionCount ?? 0} wynik${counts?.questionCount === 1 ? "" : "ów"}`
+                    ? formatResultsCount(counts?.questionCount ?? 0)
                     : ""}
               </span>
               <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
@@ -140,7 +166,7 @@ function Index() {
                 onClick={() => { setQuery(""); setSelectedYear("all"); }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded-md hover:bg-accent"
               >
-                Clear
+                Wyczyść
               </button>
             )}
           </div>
@@ -180,7 +206,7 @@ function Index() {
               onClick={() => setIsOpen(!isOpen)}
               className="flex items-center gap-2 bg-background border border-border text-foreground text-sm rounded-lg pl-4 pr-3 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary transition-colors hover:bg-accent/50 shadow-sm"
             >
-              <span>{selectedYear === "all" ? "All years" : selectedYear}</span>
+              <span>{selectedYear === "all" ? "Cały okres" : selectedYear}</span>
               <ChevronDown
                 className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
               />
@@ -218,7 +244,7 @@ function Index() {
 
         {!isLoading && groups.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
-            No questions match "<span className="text-foreground">{query}</span>"
+            Brak wyników dla "<span className="text-foreground">{query}</span>"
           </div>
         )}
 
@@ -250,8 +276,7 @@ function Index() {
                   {group.video_title}
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {group.video_date} · {group.questions.length} question
-                  {group.questions.length === 1 ? "" : "s"}
+                  {group.video_date} · {formatQuestionsCount(group.questions.length)}
                 </p>
               </div>
             </div>
@@ -287,7 +312,7 @@ function Index() {
         <div ref={sentinelRef} className="h-1" />
 
         <footer className="pt-8 pb-4 text-center text-xs text-muted-foreground">
-          Click any question to open the video at the exact moment.
+          Kliknij pytanie, aby otworzyć film w konkretnym momencie.
         </footer>
       </main>
     </div>
