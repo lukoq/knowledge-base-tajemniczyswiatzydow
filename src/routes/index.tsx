@@ -1,11 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { Search, Play, Clock, Sun, Moon, Loader2, ChevronDown } from "lucide-react";
+import { Search, Play, Clock, Sun, Moon, Loader2, ChevronDown, Info, Github, Youtube, MessageCircleQuestionMark} from "lucide-react";
 import { fetchMatchingCounts, fetchQuestions, groupByVideo } from "@/data/questions";
 import { useTheme } from "@/hooks/use-theme";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -131,7 +139,7 @@ function Index() {
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-2">
               <div className="grid place-items-center w-9 h-9 rounded-lg bg-primary/15 text-primary">
-                <Play className="w-6 h-6 fill-current" />
+                <MessageCircleQuestionMark className="w-6 h-6" />
               </div>
               <div>
                 <h1 className="text-base font-semibold leading-tight">Tajemniczy Świat Żydów - Zbiór pytań z Q&A</h1>
@@ -148,6 +156,50 @@ function Index() {
                     ? formatResultsCount(counts?.questionCount ?? 0)
                     : ""}
               </span>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="O projekcie">
+                    <Info className="w-4 h-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+
+                  <DialogHeader className="flex flex-row items-center justify-between mt-2 sm:mt-0">
+                    <DialogTitle className="leading-none flex items-center min-h-[1.5rem]">O projekcie</DialogTitle>
+                  </DialogHeader>
+                  
+                  <DialogDescription>
+                    Jest to zbiór pytań pojawiających się podczas live'ów na kanale <b>Tajemniczy Świat Żydów</b> na Youtube. 
+                    Powstał on dzięki znacznikom dodawanych pod każdym 
+                    filmem przez użytkownika <b>@PawełSowula</b>, które posłużyły jako baza projektu.
+                    Strona ma pomagać w szybkim znalezieniu interesującego nas zagadnienia i sprawdzeniu, czy na nasze pytanie padła już
+                    kiedyś odpowiedź.
+                    <br /><br />
+                    Jeśli chcesz dowiedzieć się więcej lub wesprzeć projekt, odwiedź nasze strony.
+                  </DialogDescription>
+                  
+                  <div className="flex gap-3 justify-end">
+                    <a
+                      href="#"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                      <Github className="w-4 h-4" />
+                      GitHub
+                    </a>
+                    <a
+                      href="#"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                      <Youtube className="w-4 h-4" />
+                      YouTube
+                    </a>
+                  </div>
+                </DialogContent>
+              </Dialog>
               <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </Button>
