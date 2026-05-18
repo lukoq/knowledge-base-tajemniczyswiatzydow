@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
   component: Index,
   head: () => ({
     meta: [
-      { title: "Zapytaj Żyda — Q&A Knowledge Base" },
+      { title: "Q&A Tajemniczy Świat Żydów" },
       {
         name: "description",
         content:
@@ -169,13 +169,14 @@ function Index() {
                   </DialogHeader>
                   
                   <DialogDescription>
-                    Jest to zbiór pytań pojawiających się podczas live'ów na kanale <b>Tajemniczy Świat Żydów</b> na Youtube. 
-                    Powstał on dzięki znacznikom dodawanych pod każdym 
-                    filmem przez użytkownika <b>@PawełSowula</b>, które posłużyły jako baza projektu.
+                    Jast to zbiór pytań pojawiających się podaczas spotkań live na kanale Youtube <b>Tajemniczy Świat Żydów</b>. 
+                    Dane pochodzą z komentarzy użytkownika <b>@PawełSowula</b> spod dostępnych filmów. 
+                    Zostały one odpowiednio wyczyszczone, otagowane i dostosowane do wyszukiwarki.
+                     <br /><br />
                     Strona ma pomagać w szybkim znalezieniu interesującego nas zagadnienia i sprawdzeniu, czy na nasze pytanie padła już
                     kiedyś odpowiedź.
                     <br /><br />
-                    Jeśli chcesz dowiedzieć się więcej lub wesprzeć projekt, odwiedź nasze strony.
+                    Dostępny kod projektu i kanał Eliyahu do kliknięcia na dole :)
                   </DialogDescription>
                   
                   <div className="flex gap-3 justify-end">
