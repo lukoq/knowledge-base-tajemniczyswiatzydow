@@ -181,7 +181,7 @@ function Index() {
                   
                   <div className="flex gap-3 justify-end">
                     <a
-                      href="#"
+                      href="https://github.com/lukoq/knowledge-base-tajemniczyswiatzydow"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -190,7 +190,7 @@ function Index() {
                       GitHub
                     </a>
                     <a
-                      href="#"
+                      href="https://www.youtube.com/channel/UCUKwtw7EFTyl5VSks1gmF7A"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground transition-colors"
